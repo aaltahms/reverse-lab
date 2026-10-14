@@ -34,7 +34,7 @@ Views and case selections have shareable local URLs. Arrow keys move between the
 
 ## Rebuild and verify
 
-Requires a native Clang compiler, `nm`, `file`, and LLVM or GNU `objdump`. On macOS use the installed Xcode Command Line Tools. The locally verified release uses **Apple Clang 17.0.0, macOS arm64, Python 3.9.6**. The UBSan corpus check passes locally; optional ASan execution timed out on this host, so no ASan success is claimed. `python3 -m lab.sanitize --address` enables ASan on a host with a working runtime. Linux support is implemented and included in CI but has not yet been executed on a hosted runner. Windows is not a supported release target.
+Requires a native Clang compiler, `nm`, `file`, and LLVM or GNU `objdump`. On macOS use the installed Xcode Command Line Tools. The locally verified release uses **Apple Clang 17.0.0, macOS arm64, Python 3.9.6**. The UBSan corpus check passes locally; optional ASan execution timed out on this host, so no ASan success is claimed. `python3 -m lab.sanitize --address` enables ASan on a host with a working runtime. The [hosted Ubuntu 24.04 workflow](https://github.com/aaltahms/reverse-lab/actions/runs/38621612572) passed on Python 3.9 and 3.13, including the ASan/UBSan corpus check. Windows is not a supported release target.
 
 From this directory:
 
@@ -84,7 +84,7 @@ The recording retains exact compiler output/flags/commands, platform, source/har
 - Candidate freezing followed by a disjoint evaluation corpus, native execution and guarded exact replay.
 - Read-only, dependency-free evidence explorer with loading/error/empty states, source reveal, and keyboard navigation.
 - A real REA/Ghidra CLI adapter with target/profile binding, unmodified raw Evidence exports, provider limitations and navigable pseudocode landmarks.
-- A 34-test local suite and static production export; [CI workflow](.github/workflows/verify.yml) prepared for this directory as a standalone repository. No hosted CI run is claimed.
+- A 34-test suite and static production export; [CI workflow](.github/workflows/verify.yml) with a [successful hosted Linux run](https://github.com/aaltahms/reverse-lab/actions/runs/38621612572) on Python 3.9 and 3.13.
 
 The [architecture](docs/architecture.md), [verification record](docs/verification.md), [fixture contracts](docs/contracts.md), and [backlog](docs/backlog.md) define exact boundaries.
 
@@ -129,4 +129,4 @@ Run `python3 -m lab.release` to create `dist/reverse-lab-0.3.0.zip`, containing 
 
 A clean extraction passed all 34 tests, native regeneration, frozen evaluation, static export and exact failing-case replay. The reproducible seed gives the same 7,000 valid-candidate agreements and 999 repeated deliberate mismatches across the seven builds.
 
-Publication contains only this project's scoped source, documentation, screenshots and redistributable recordings. The browser demo serves the included recording; native replay requires a local build. Optional tools and unrelated workspace files are excluded.
+Published at [aaltahms/reverse-lab](https://github.com/aaltahms/reverse-lab), with the [browser demo](https://aaltahms.github.io/reverse-lab/) linked from [Aymen's portfolio](https://aaltahms.github.io/#reverse-lab). See the [publication verification record](docs/publication.md) for source, CI and deployment checks. Publication contains only this project's scoped source, documentation, screenshots and redistributable recordings. The browser demo serves the included recording; native replay requires a local build. Optional tools and unrelated workspace files are excluded.
