@@ -1,0 +1,43 @@
+name: ReverseLab verification
+on:
+  push:
+    paths: ['fixtures/**', 'reconstructions/**', 'lab/**', 'tests/**', 'web/**', '.github/workflows/verify.yml']
+  pull_request:
+    paths: ['fixtures/**', 'reconstructions/**', 'lab/**', 'tests/**', 'web/**', '.github/workflows/verify.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-pipeline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python: ['3.9', '3.13']
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Native tooling
+        run: sudo apt-get update && sudo apt-get install -y clang llvm
+      - name: Pipeline regression
+        run: python3 -m unittest discover -s tests -v
+      - name: Regenerate full evidence
+        run: python3 -m lab.pipeline generate
+      - name: Freeze and evaluate unseen inputs
+        run: |
+          python3 -m lab.holdout freeze
+          python3 -m lab.holdout evaluate --seed 20261014
+      - name: Sanitized corpus execution
+        run: python3 -m lab.sanitize --address
+      - name: Static explorer validation
+        run: |
+          node --check web/app.js
+          python3 -m lab.webbuild
