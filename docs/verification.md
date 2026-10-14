@@ -16,6 +16,10 @@ Browser checks exercised the real loopback app in Chrome: unavailable evaluation
 
 The 0.3.0 source archive contains 47 scoped files and a SHA-256 manifest, excluding native binaries and toolchains. A fresh extraction validated the shipped freeze/Ghidra assets, passed all **34 tests**, regenerated native and stripped artifacts, created a new local freeze, reproduced **7,000 agreements / 999 repeated deliberate failures** with seed 3425116644, exported the explorer and replayed the selected mismatch with exit 1. The provider-only import test fixture was updated to discard an inapplicable evaluation binding when replacing the full experiment. The original host's final artifact, candidate, generator, freeze and raw provider hashes were checked again after packaging.
 
+## Hosted verification and publication
+
+On October 14, the public repository's [Linux CI run](https://github.com/aaltahms/reverse-lab/actions/runs/38621612572) passed both Python 3.9 and 3.13 jobs, including native regression, freeze/evaluation and ASan/UBSan execution. The browser demo and portfolio are live; all 12 published website assets matched the reviewed files. See [publication record](publication.md). The historical unrun-CI and local macOS ASan limitations below describe the earlier baseline.
+
 ## Historical 0.1.0 baseline
 
 Verified October 13, 2026 on macOS arm64 with Apple Clang 17.0.0, Python 3.9.6, Apple LLVM objdump 17.0.0, and Node 24.19.0 for JavaScript syntax. The sections below record the original 0.1.0 local baseline, before the 0.2.0 provider milestone. That baseline did not exercise REA/Ghidra. Public deployment and hosted CI remain unverified.
