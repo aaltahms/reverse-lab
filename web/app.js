@@ -1,9 +1,12 @@
+import {explainPacket} from './packet-view.mjs';
+
 const app = document.querySelector('#app');
 const views = ['investigation', 'evidence', 'candidate', 'verification', 'build', 'reference'];
-const labels = ['Investigation', 'Native evidence', 'Candidate', 'Verification', 'Build record', 'Reference source'];
+const labels = ['Overview', 'Disassembly & Ghidra', 'Python code', 'All test cases', 'Build details', 'C source'];
 let data;
 let revealed = false;
-const state = { fixture: 'checksum', variant: 'O2', view: 'investigation', candidate: 'reconstruct', corpus: 'development', evidence: 'disassembly', filter: 'all', query: '', case: '', codeQuery: '', page: 0 };
+const defaults = { screen: 'workbench', fixture: 'packet', variant: 'O2-stripped', view: 'verification', candidate: 'faulty_endian', corpus: 'development', evidence: 'disassembly', filter: 'all', query: '', case: 'boundary-006', codeQuery: '', page: 0 };
+const state = {...defaults};
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = value => new Intl.NumberFormat('en').format(value);
 const hex = value => `0x${value.toString(16).padStart(8, '0')}`;
@@ -19,6 +22,9 @@ function selected() {
 }
 function readURL() {
   const params = new URLSearchParams(location.search);
+  Object.assign(state, defaults);
+  state.screen = params.get('screen') === 'evidence' || (!params.has('screen') && params.has('view')) ? 'evidence' : 'workbench';
+  if (state.screen === 'evidence' && !params.has('candidate')) state.candidate = 'reconstruct';
   state.corpus = params.get('corpus') === 'heldout' ? 'heldout' : 'development';
   for (const key of ['fixture','variant','view','candidate','case','filter','evidence']) if (params.has(key)) state[key] = params.get(key);
   if (!['disassembly','symbols','artifact','locations','ghidra'].includes(state.evidence)) state.evidence='disassembly';
@@ -31,25 +37,22 @@ function readURL() {
 function change(patch, options = {}) {
   Object.assign(state, patch);
   const params = new URLSearchParams();
-  for (const key of ['fixture','variant','view','candidate','case','filter','evidence','corpus']) if (state[key]) params.set(key, state[key]);
+  for (const key of ['screen','fixture','variant','view','candidate','case','filter','evidence','corpus']) if (state[key]) params.set(key, state[key]);
   history.pushState(null, '', `?${params}`);
   render(options.focus);
 }
-function pathButton(number, title, view) {
-  return `<button data-view="${view}" class="${state.view === view ? 'active' : ''}" ${state.view === view ? 'aria-current="step"' : ''}><span>${number}</span><strong>${title}</strong></button>`;
-}
 function render(focus) {
+  if (state.screen === 'workbench') return renderWorkbench(focus);
   const {fixture, variant, report} = selected();
   const good = variant.reports[0];
   app.innerHTML = `<div class="shell">
     <aside class="sidebar" aria-label="Fixture navigation">
-      <div><div class="brand"><span class="mark" aria-hidden="true">[r]</span> ReverseLab</div><div class="brand-sub">Behavior, recovered.</div></div>
-      <div><p class="side-label">Experiment library / ${String(data.fixtures.length).padStart(2,'0')}</p><nav class="fixture-list">${data.fixtures.map((f,i) => `<button class="fixture-button ${f.id === fixture.id ? 'active' : ''}" data-fixture="${f.id}" ${f.id === fixture.id ? 'aria-current="true"' : ''}><span class="fixture-index">0${i+1}</span><span><strong>${esc(f.title)}</strong><small>${esc(f.id)}.c · ${f.variants.length} builds</small></span></button>`).join('')}</nav></div>
+      <div><div class="brand"><span class="mark" aria-hidden="true">[r]</span> ReverseLab</div><div class="brand-sub">Technical evidence</div></div>
+      <div><p class="side-label">Recorded test programs</p><nav class="fixture-list">${data.fixtures.map((f,i) => `<button class="fixture-button ${f.id === fixture.id ? 'active' : ''}" data-fixture="${f.id}" ${f.id === fixture.id ? 'aria-current="true"' : ''}><span class="fixture-index">0${i+1}</span><span><strong>${esc(f.title)}</strong><small>${esc(f.id)}.c · ${f.variants.length} builds</small></span></button>`).join('')}</nav></div>
       <div class="side-note"><strong><span class="dot"></span> Native pipeline exercised</strong><p>Owned C → Clang → native tools → Python candidate → differential tests.</p><p>Educational experiment. Reference source was known during authorship.</p><a href="data/report.json" download="reverselab-report.json">Download evidence JSON ↗</a></div>
     </aside>
-    <div class="workspace"><header class="topbar"><div class="crumb">LAB / <b>${esc(fixture.id.toUpperCase())}</b> / ${esc(variant.id)}</div><div class="record"><span class="dot"></span><span>Evidence recording</span><span class="record-date">· ${esc(new Date(data.generatedAt).toLocaleDateString('en-CA'))}</span></div></header>
+    <div class="workspace"><header class="topbar"><button class="text-button" data-home>← Decoder comparison</button><div class="record"><span class="dot"></span><span>Recorded results</span><span class="record-date">· ${esc(new Date(data.generatedAt).toLocaleDateString('en-CA'))}</span></div></header>
       <main id="main" class="main" tabindex="-1"><div class="hero"><div><p class="eyebrow">Experiment ${String(data.fixtures.indexOf(fixture)+1).padStart(2,'0')} / ${esc(data.platform.architecture)} · ${esc(data.platform.system)}</p><h1>${esc(fixture.title)}</h1><p class="subhead">${esc(fixture.subtitle)} Inspect the artifact, follow the interpretation, test the behavior.</p></div><div class="variants"><label>Build variant</label><div class="segmented" role="group" aria-label="Build variant">${fixture.variants.map(v => `<button data-variant="${v.id}" class="${v.id===variant.id?'active':''}" aria-pressed="${v.id===variant.id}">${esc(v.label || `-${v.id}`)}</button>`).join('')}</div><div class="small-muted">${fmt(variant.size)} bytes · ${variant.stripped?'symbols stripped':'debug symbols'}</div></div></div>
-      <nav class="path" aria-label="Investigation path">${pathButton('01 / TARGET','Compiled artifact','build')}${pathButton('02 / OBSERVE','Native evidence','evidence')}${pathButton('03 / INTERPRET','Authored candidate','candidate')}${pathButton('04 / CHALLENGE','Behavioral tests','verification')}${pathButton('05 / REVEAL','Reference source','reference')}</nav>
       <div class="tablist" role="tablist" aria-label="Investigation views">${views.map((view,i) => `<button id="tab-${view}" role="tab" aria-selected="${state.view===view}" aria-controls="view-panel" tabindex="${state.view===view?0:-1}" data-view="${view}">${labels[i]}</button>`).join('')}</div>
       <section id="view-panel" role="tabpanel" aria-labelledby="tab-${state.view}" tabindex="0">${content(fixture,variant,report,good)}</section>
       <footer class="foot"><span>Recorded execution · ${fmt(state.view==='verification'?report.total:good.total)} inputs / candidate / build · ${state.view==='verification' && state.corpus==='heldout'?'held-out evaluation':'development corpus'}</span><span>Sampled agreement is evidence, not an equivalence proof.</span></footer></main>
@@ -58,6 +61,47 @@ function render(focus) {
   const tablist = document.querySelector('.tablist');
   const activeTab = document.querySelector('[role=tab][aria-selected=true]');
   if (activeTab.offsetLeft + activeTab.offsetWidth > tablist.clientWidth) tablist.scrollLeft = activeTab.offsetLeft + activeTab.offsetWidth - tablist.clientWidth;
+  if (focus) document.querySelector(focus)?.focus();
+}
+
+function renderWorkbench(focus) {
+  const fixture = data.fixtures.find(f => f.id === 'packet');
+  if (!fixture) {
+    app.innerHTML = '<main id="main" class="boot"><h1>Packet example unavailable</h1><p>This recording contains other test programs, but no packet decoder.</p><button class="btn primary" data-show-recording>Open recorded programs</button></main>';
+    document.querySelector('[data-show-recording]').addEventListener('click', () => change({screen:'evidence'}));
+    return;
+  }
+  const variant = fixture.variants.find(v => v.id === 'O2-stripped') || fixture.variants.find(v => v.id === 'O2') || fixture.variants[0];
+  const report = variant.reports.find(r => r.id === state.candidate) || variant.reports[0];
+  const initial = report.cases.find(c => c.id === 'boundary-006') || report.cases[0];
+  const chosen = report.cases.find(c => c.id === state.case) || initial;
+  Object.assign(state, {fixture:'packet', variant:variant.id, candidate:report.id, case:chosen.id, corpus:'development'});
+  const samples = [
+    ['valid-length-0-seq-4660', 'Different sequence bytes'],
+    ['valid-length-0-seq-65535', 'Matching sequence bytes'],
+    ['bad-checksum', 'Damaged checksum'],
+    ['empty', 'Empty input'],
+  ].map(([label, title]) => ({row:report.cases.find(c => c.label === label), title})).filter(s => s.row);
+  if (!samples.some(s => s.row.id === chosen.id)) samples.push({row:chosen, title:`Recorded packet · ${chosen.id}`});
+  const result = explainPacket(chosen, report.intentionalFault);
+  const bytes = chosen.hex.match(/../g) || [];
+  const label = value => value.accepted ? 'Accepted' : 'Rejected';
+  const output = (value, title, description) => `<section class="decoder-output" aria-label="${esc(title)}"><div class="decoder-heading"><h3>${esc(title)}</h3><span class="decision">${label(value)}</span></div><p class="decoder-description">${esc(description)}</p>${value.accepted?`<p class="decoded-label">Message number <span>(sequence)</span></p><div class="decoded-number">${fmt(value.sequence)}</div><p class="decoded-hex">0x${value.sequence.toString(16).padStart(4,'0')}</p>`:`<p class="rejection-reason">${esc(value.reason)}</p><p class="decoded-label">No message number decoded.</p>`}</section>`;
+  app.innerHTML = `<div class="workbench-shell"><header class="workbench-header"><a class="workbench-brand" href="?screen=workbench">ReverseLab<span>Decoder comparison</span></a><button class="text-button" data-open-technical>Technical evidence →</button></header>
+    <main id="main" class="workbench-main" tabindex="-1"><div class="workbench-intro"><p class="workbench-kicker">Interactive example · saved native test results</p><h1>Compare two packet decoders.</h1><p>A decoder turns incoming bytes into values. Check whether a Python rewrite reads the same message number as the original C program.</p></div>
+    <div class="workbench-grid"><section class="packet-input" aria-labelledby="packet-input-title"><h2 id="packet-input-title"><span>1</span> Choose a packet</h2><label for="packet-sample">Recorded example</label><select id="packet-sample" class="field">${samples.map(s=>`<option value="${esc(s.row.id)}" ${s.row.id===chosen.id?'selected':''}>${esc(s.title)}</option>`).join('')}</select><p class="packet-input-hint">Both versions receive these exact bytes.</p><div class="packet-wire" aria-label="Packet bytes in hexadecimal">${bytes.length?bytes.map((b,i)=>`<span class="wire-byte ${[2,3].includes(i)?'wire-sequence':''}"><small>${String(i).padStart(2,'0')}</small>${b}</span>`).join(''):'<p class="empty-packet">No bytes provided.</p>'}</div>${bytes.length>=4?`<p class="sequence-hint"><span class="sequence-swatch" aria-hidden="true"></span><strong>${esc(bytes[2])} ${esc(bytes[3])}</strong> are the two sequence bytes.</p>`:''}<details class="format-help"><summary>What is in this packet?</summary><p>Byte 0 identifies the format. Byte 1 is the message type. Bytes 2–3 hold the sequence number. The next byte states the payload length; the final byte is a checksum.</p><p>This is a small packet format written for this lab.</p></details><p class="saved-results-note">Changing the example loads another recorded comparison. It does not execute C or Python in your browser.</p></section>
+    <section class="decoder-results" aria-labelledby="decoder-results-title"><h2 id="decoder-results-title"><span>2</span> Compare the decoded values</h2><div class="decoder-columns">${output(result.original,'Original · C','Compiled reference program')}${output(result.replacement,'Replacement · Python',report.intentionalFault?'Version with a deliberate byte-order bug':'Corrected byte order')}</div><div class="comparison-verdict ${result.kind==='hidden'?'values-warning':result.matches?'values-match':'values-differ'}" role="status"><strong>${result.kind==='hidden'?'Same values — bug still hidden':result.kind==='rejected'?'Both reject this input':result.matches?'Same recorded output':'Different recorded outputs'}</strong><span>${result.original.accepted && result.replacement.accepted?`Message number: ${fmt(result.original.sequence)} ${result.matches?'=':'≠'} ${fmt(result.replacement.sequence)}`:'Compare acceptance and the rejection reason above.'}</span></div>
+    <section class="comparison-explanation" aria-labelledby="explanation-title"><p class="explanation-step">3 · Understand the result</p><h2 id="explanation-title">${esc(result.title)}</h2><p>${esc(result.detail)}</p><div class="comparison-next"><button class="btn ${report.intentionalFault?'primary':''}" id="switch-decoder">${report.intentionalFault?'Compare corrected version':'Compare buggy version'}</button><button class="text-button" data-open-tests>Open code and all test cases →</button></div></section></section></div>
+    <details class="record-details"><summary>Recorded run and local replay</summary><p>The values above come directly from the saved native comparison, rather than a browser simulation of either decoder. Replaying it requires the recorded local executable and matching source hashes.</p><dl class="definition-list"><dt>Selected case</dt><dd class="mono">${esc(chosen.id)}</dd><dt>Original output</dt><dd class="mono">${hex(chosen.expected)}</dd><dt>Replacement output</dt><dd class="mono">${hex(chosen.actual)}</dd><dt>Native build</dt><dd class="mono">${esc(variant.artifact)}</dd><dt>Artifact SHA-256</dt><dd class="hash">${esc(variant.sha256)}</dd></dl><div class="command">${esc(report.rerun)} --case ${esc(chosen.id)}</div><button class="btn" id="copy-packet-replay">Copy replay command</button></details>
+    <footer class="workbench-footer"><p>This example uses programs we wrote. The Python versions were authored with the C source available. Matching samples do not prove that two programs always behave identically.</p><a href="https://github.com/aaltahms/reverse-lab">Source and local setup ↗</a></footer></main></div>`;
+  const technical = () => change({screen:'evidence', view:'verification', filter:'all', page:0}, {focus:'#tab-verification'});
+  document.querySelectorAll('[data-open-technical],[data-open-tests]').forEach(button => button.addEventListener('click', technical));
+  document.querySelector('#packet-sample').addEventListener('change', event => change({case:event.target.value}, {focus:'#packet-sample'}));
+  document.querySelector('#switch-decoder').addEventListener('click', () => change({candidate:report.intentionalFault?'reconstruct':'faulty_endian'}, {focus:'#switch-decoder'}));
+  document.querySelector('#copy-packet-replay').addEventListener('click', async event => {
+    try {await navigator.clipboard.writeText(`${report.rerun} --case ${chosen.id}`); event.target.textContent = 'Copied';}
+    catch {event.target.textContent = 'Copy unavailable; select the command above';}
+  });
   if (focus) document.querySelector(focus)?.focus();
 }
 function content(f, v, r, good) {
@@ -128,6 +172,7 @@ function referenceView(f) {
   return `<div class="section-heading"><h2>The source behind the experiment.</h2>${tag('GROUND TRUTH / SELF-AUTHORED','neutral')}</div><div class="callout">${esc(f.contract)}</div><div class="panel"><div class="panel-head"><h3>${esc(f.source.path)}</h3><button class="text-button" id="hide-source">Hide reference</button></div>${code(f.source.text)}<div class="panel-footer"><span class="hash">SHA-256 ${f.source.sha256}</span></div></div>`;
 }
 function bind() {
+  document.querySelector('[data-home]')?.addEventListener('click', () => change({...defaults}, {focus:'#packet-sample'}));
   document.querySelectorAll('[data-fixture]').forEach(button=>button.addEventListener('click',()=>{
     revealed=false; state.query=''; state.codeQuery=''; state.page=0; change({fixture:button.dataset.fixture,variant:data.fixtures.find(f=>f.id===button.dataset.fixture).variants.some(v=>v.id===state.variant)?state.variant:'O2',candidate:'reconstruct',case:'',filter:'all'}, {focus:`[data-fixture="${button.dataset.fixture}"]`});
   }));

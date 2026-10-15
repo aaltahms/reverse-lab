@@ -3,3 +3,67 @@
 .segmented{flex-shrink:0}.segmented button{white-space:nowrap}.tablist{position:relative}
 .grid{align-items:start}
 @media(max-width:680px){.variants{flex-wrap:wrap}.variants label{flex-basis:100%}.variants .small-muted{flex-basis:100%}}
+
+/* The first screen follows one comparison, with evidence available on demand. */
+.workbench-shell{min-height:100vh;background:#fff}
+.workbench-header{max-width:1180px;margin:auto;padding:21px 36px;display:flex;justify-content:space-between;align-items:center;gap:20px;border-bottom:1px solid var(--line)}
+.workbench-brand{font-size:19px;font-weight:700;color:var(--ink);text-decoration:none;letter-spacing:-.6px}
+.workbench-brand span{font-size:12px;font-weight:400;color:var(--muted);letter-spacing:0;margin-left:18px}
+.workbench-main{max-width:1180px;margin:auto;padding:34px 36px 22px}
+.workbench-intro{margin-bottom:32px}
+.workbench-kicker{font-size:12px;color:var(--muted);margin:0 0 10px}
+.workbench-intro h1{font-size:31px;letter-spacing:-1px;margin-bottom:12px}
+.workbench-intro>p:last-child{font-size:15px;color:#4b5d56;max-width:680px;line-height:1.65;margin:0}
+.workbench-grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:38px;align-items:start}
+.workbench-grid h2{font-size:15px;letter-spacing:0;margin-bottom:22px}
+.workbench-grid h2>span{display:inline-block;margin-right:9px;color:var(--muted);font:12px var(--mono)}
+.packet-input{border-top:2px solid var(--ink);padding-top:17px;min-width:0}
+.packet-input>label{display:block;font-size:12px;font-weight:600;margin-bottom:7px}
+.packet-input select{width:100%;font-size:13px;padding:10px 12px}
+.packet-input-hint{color:var(--muted);font-size:12px;margin:15px 0 12px}
+.packet-wire{display:flex;flex-wrap:wrap;gap:5px;padding:13px 0}
+.wire-byte{font:17px var(--mono);display:flex;flex-direction:column;align-items:center;gap:6px;padding:7px;background:#f5f6f3;border-bottom:2px solid #e1e6df;min-width:40px}
+.wire-byte small{font:9px var(--mono);color:var(--muted)}
+.wire-byte.wire-sequence{background:#fcf1e5;border-bottom-color:#b86734}
+.sequence-hint{font-size:12px;color:#785135;line-height:1.65;margin:6px 0 20px}
+.sequence-hint strong{font-family:var(--mono);font-weight:500}
+.sequence-swatch{width:8px;height:8px;display:inline-block;background:#b86734;margin-right:7px}
+.format-help{border-top:1px solid var(--line);padding-top:14px}
+.format-help summary{font-size:12px}
+.format-help p{font-size:12px;color:var(--muted);margin:12px 0}
+.saved-results-note{margin:22px 0 0;font-size:11px;line-height:1.7;color:var(--muted)}
+.empty-packet{color:var(--muted);font-size:13px;margin:10px 0}
+.decoder-results{border-top:2px solid var(--ink);padding-top:17px;min-width:0}
+.decoder-columns{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.decoder-output{padding:16px 18px 18px;border:1px solid var(--line);min-width:0}
+.decoder-heading{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:5px;margin-bottom:8px;min-height:28px}
+.decoder-heading h3{font-size:13px;margin:0}
+.decision{font-size:11px;color:var(--muted)}
+.decoder-description{font-size:12px;color:var(--muted);min-height:38px;line-height:1.5;margin:0 0 20px}
+.decoded-label{font-size:12px;margin:0;color:var(--muted)}
+.decoded-label span{font-size:11px}
+.decoded-number{font:39px/1.2 var(--mono);letter-spacing:-2px;color:var(--ink);margin:8px 0}
+.decoded-hex{font:12px var(--mono);color:var(--muted);margin:0}
+.rejection-reason{font-size:16px;line-height:1.6;margin:0 0 20px;min-height:58px}
+.comparison-verdict{border-left:3px solid var(--orange);background:#fbf2ec;padding:13px 17px;margin:18px 0 26px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 16px;font-size:12px}
+.comparison-verdict strong{font-weight:600;color:#84401f}
+.comparison-verdict.values-match{background:#eff5ef;border-color:var(--green)}
+.comparison-verdict.values-match strong{color:var(--green)}
+.comparison-verdict span{color:var(--muted)}
+.comparison-explanation{padding:0 0 4px}
+.explanation-step{font-size:11px;color:var(--muted);margin:0 0 8px}
+.comparison-explanation h2{font-size:19px;line-height:1.4;letter-spacing:-.3px;margin:0 0 10px}
+.comparison-explanation>p:not(.explanation-step){font-size:13px;line-height:1.75;color:#4b5d56;margin:0}
+.comparison-next{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-top:21px}
+.comparison-next>.btn{padding:10px 15px;font-size:12px}
+.record-details{border-top:1px solid var(--line);padding-top:16px;margin:30px 0 0}
+.record-details summary{font-size:12px}
+.record-details>p{font-size:12px;color:var(--muted);margin:16px 0;max-width:720px}
+.record-details .definition-list{max-width:740px;grid-template-columns:130px minmax(0,1fr)}
+.record-details .command{max-width:900px}
+.workbench-footer{border-top:1px solid var(--line);margin-top:24px;padding-top:15px;display:flex;justify-content:space-between;align-items:flex-start;gap:24px;color:var(--muted);font-size:11px;line-height:1.7}
+.workbench-footer p{max-width:750px;margin:0}
+.workbench-footer a{white-space:nowrap}
+@media(max-width:1050px){.workbench-grid{grid-template-columns:260px minmax(0,1fr);gap:26px}.decoder-columns{gap:12px}.decoder-output{padding:14px}.decoded-number{font-size:33px}.decoder-heading{min-height:42px}.decoder-description{min-height:54px}}
+@media(max-width:800px){.workbench-header,.workbench-main{padding-left:24px;padding-right:24px}.workbench-grid{grid-template-columns:1fr;gap:27px}.workbench-intro{margin-bottom:25px}.packet-wire{padding-top:3px}.format-help{margin-top:4px}.saved-results-note{margin-top:13px}.decoder-description{min-height:36px}.decoder-heading{min-height:28px}.workbench-footer{display:block}.workbench-footer a{display:inline-block;margin-top:8px}}
+@media(max-width:480px){.workbench-header{padding:18px 20px}.workbench-brand span{display:none}.workbench-header>.text-button{font-size:11px}.workbench-main{padding:25px 20px 20px}.workbench-intro h1{font-size:27px;line-height:1.2}.workbench-intro>p:last-child{font-size:14px}.decoder-columns{gap:10px}.decoder-output{padding:13px 12px}.decoder-heading{display:block;min-height:47px}.decoder-heading h3{font-size:12px;min-height:18px;margin-bottom:3px}.decoder-description{font-size:11px;min-height:51px;margin-bottom:15px}.decoded-number{font-size:29px;letter-spacing:-1.5px}.decoded-label{font-size:11px}.decoded-label span{display:block}.comparison-verdict{margin-bottom:23px}.comparison-explanation h2{font-size:18px}.comparison-next{gap:15px}.record-details .definition-list{grid-template-columns:100px minmax(0,1fr)}.rejection-reason{font-size:13px;min-height:82px}}
