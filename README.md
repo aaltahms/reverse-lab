@@ -1,16 +1,16 @@
 # ReverseLab
 
-**What behavior did we recover—and what evidence supports it?**
+Compare a C packet decoder with its Python rewrite and see exactly where their outputs disagree.
 
 **Specific use: catch a packet-decoder regression before trusting a replacement implementation.** Suppose a microcontroller's C decoder is the reference for a Python host tool. Sequence bytes `12 34` must mean `0x1234`; reading them as little endian silently produces `0x3412`. ReverseLab's included packet experiment catches that error, retains the exact failing packet and outputs, and supplies a guarded replay command. [Walk through that case](docs/practical-use-case.md).
 
-[Explore the browser demo](https://aaltahms.github.io/reverse-lab/?fixture=packet&variant=O2-stripped&view=verification&candidate=faulty_endian&case=boundary-006&filter=failed&corpus=development) · [Aymen's portfolio](https://aaltahms.github.io/#reverse-lab)
+[Explore the browser demo](https://aaltahms.github.io/reverse-lab/) · [Aymen's portfolio](https://aaltahms.github.io/#reverse-lab)
 
 ReverseLab connects tiny C programs to their compiled artifacts, native disassembly, independently expressed Python candidates, real Ghidra pseudocode for a stripped fixture, and deterministic differential tests. Its local explorer makes the investigation reviewable: follow an interpretation to the code, inspect the executable identity, and replay a concrete counterexample.
 
 This is an educational, **source-known** experiment built with Codex assistance in October 2026. The C fixtures are self-authored. The Python candidates were authored with the reference source known. The Ghidra view contains actual decompiler output from the stripped packet binary; its function address was selected using the symbol-bearing twin. This is not a claim of blind reverse engineering. Sampled agreement is not a proof of equivalence.
 
-![Counterexample explorer](docs/screenshots/counterexample.jpg)
+![Side-by-side decoder comparison](docs/screenshots/decoder-comparison.jpg)
 
 ## Open the explorer
 
@@ -23,16 +23,17 @@ python3 -m lab.serve
 
 Open **http://127.0.0.1:4173**. If you already opened a terminal in `reverse-lab`, run only the second command. The server binds to loopback and serves `web/`; it has no execution API. Ctrl+C stops it. Choose another port with `--port 4174` if needed.
 
-1. Choose **Binary packet decoder**.
-2. Select **Inspect counterexamples →**.
-3. Select **boundary-006**. The input `a503123400ee` contains sequence bytes `12 34`.
-4. Compare reference `0x83123400` with deliberate mutant `0x83341200`.
-5. Copy the exact rerun command. Switch to **Recovered candidate** and **All cases** to inspect agreement for the same input.
-6. Inspect **Native evidence**, switch `-O0`/`-O2`, then deliberately reveal **Reference source**.
+1. The opening screen compares the same packet in **Original · C** and **Replacement · Python**. The deliberately buggy rewrite reads message number **13,330** instead of **4,660**.
+2. Select **Compare corrected version**. Both now read **4,660**.
+3. Switch back to the buggy version, then select **Matching sequence bytes**. The values agree, but the explanation warns that this packet hides the bug.
+4. Choose **Damaged checksum** or **Empty input** to see readable rejection reasons.
+5. Open **Technical evidence** for code, native disassembly/Ghidra, all test cases, exact identities and CLI replay.
 
-Views and case selections have shareable local URLs. Arrow keys move between the view tabs; `/` focuses evidence/case search. All cases are available through pagination, filters, and search. See [walkthrough](docs/walkthrough.md).
+This combines a direct comparison with a short explanation and a next action. It displays recorded native results; it does not execute either decoder in the browser or accept arbitrary uploaded programs. Technical details are secondary to the comparison. Existing evidence/case URLs still open the technical view; new comparison URLs use `screen=workbench`. Arrow keys move between technical tabs, and `/` focuses their search. See [walkthrough](docs/walkthrough.md).
 
 ## Rebuild and verify
+
+The v0.4 opening screen combines a workbench with a short explanation and a corrected-version comparison. [Interface change record](docs/interface-clarity.md). Seven JavaScript checks cover readable output fields, rejection reasons and concealed-byte-order warnings; run them with Node 24 using `node --test tests/packet-view.test.mjs`. Python-only preview remains supported.
 
 Requires a native Clang compiler, `nm`, `file`, and LLVM or GNU `objdump`. On macOS use the installed Xcode Command Line Tools. The locally verified release uses **Apple Clang 17.0.0, macOS arm64, Python 3.9.6**. The UBSan corpus check passes locally; optional ASan execution timed out on this host, so no ASan success is claimed. `python3 -m lab.sanitize --address` enables ASan on a host with a working runtime. The [hosted Ubuntu 24.04 workflow](https://github.com/aaltahms/reverse-lab/actions/runs/38621612572) passed on Python 3.9 and 3.13, including the ASan/UBSan corpus check. Windows is not a supported release target.
 
@@ -125,7 +126,7 @@ The next engineering improvement is **failure minimization**. A genuine source-b
 
 MIT; see [LICENSE](LICENSE). Original project implementation and fixtures by Aymen Al-Tahmschi with Codex assistance. Fletcher-16 is an established checksum algorithm; the lab orchestration, fixture contracts, comparison harness, mutant experiment, and explorer are new project work. The release archive includes genuine REA/Ghidra output for our owned target, but no REA/Ghidra implementation or third-party executable. It bundles no font, icon library, or JavaScript/Python runtime package. REA, Ghidra and Temurin retain their own licenses in the ignored optional toolchain. External compilers and system tools retain their own licenses.
 
-Run `python3 -m lab.release` to create `dist/reverse-lab-0.3.0.zip`, containing only this project’s source, documentation, demo evidence and a SHA-256 manifest. The freeze receipt includes candidate snapshots and development inputs, but the archive excludes native binaries and optional toolchains.
+Run `python3 -m lab.release` to create `dist/reverse-lab-0.4.0.zip`, containing only this project’s source, documentation, demo evidence and a SHA-256 manifest. The freeze receipt includes candidate snapshots and development inputs, but the archive excludes native binaries and optional toolchains.
 
 A clean extraction passed all 34 tests, native regeneration, frozen evaluation, static export and exact failing-case replay. The reproducible seed gives the same 7,000 valid-candidate agreements and 999 repeated deliberate mismatches across the seven builds.
 
