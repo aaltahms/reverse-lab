@@ -1,5 +1,7 @@
 # Next milestones
 
+Interface revision in 0.4: a default decoder comparison, readable values, inline explanations and one corrected-version action. Technical evidence is secondary, with existing deep links preserved. [Change record](interface-clarity.md). Gather feedback on this flow before adding another navigation surface or dashboard.
+
 Completed in 0.2.0: real Ghidra analysis of the stripped packet fixture, target/profile-bound REA imports, exact replay identity, and an explorer with actual pseudocode landmarks. See [investigation record](ghidra-investigation.md). Completed in 0.3.0: source-known candidate freezing, a disjoint evaluation corpus, native comparison, replay guards and corpus selection in the explorer. See [evaluation procedure](held-out-evaluation.md).
 
 1. **Failure reduction.** Minimize a failing byte sequence while retaining the divergence, original case identity and reduction steps. This would turn the comparison harness into a stronger debugging instrument.
