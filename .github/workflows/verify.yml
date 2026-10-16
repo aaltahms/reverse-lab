@@ -40,5 +40,6 @@ jobs:
       - name: Static explorer validation
         run: |
           node --check web/app.js
-          node --test tests/packet-view.test.mjs
+          node --check web/compare.mjs
+          node --test tests/packet-view.test.mjs tests/comparison-report.test.mjs
           python3 -m lab.webbuild
