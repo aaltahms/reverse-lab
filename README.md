@@ -1,16 +1,50 @@
 # ReverseLab
 
-Compare a C packet decoder with its Python rewrite and see exactly where their outputs disagree.
+Compare your C byte-processing function with its Python rewrite and keep the exact inputs where their outputs disagree.
 
 **Specific use: catch a packet-decoder regression before trusting a replacement implementation.** Suppose a microcontroller's C decoder is the reference for a Python host tool. Sequence bytes `12 34` must mean `0x1234`; reading them as little endian silently produces `0x3412`. ReverseLab's included packet experiment catches that error, retains the exact failing packet and outputs, and supplies a guarded replay command. [Walk through that case](docs/practical-use-case.md).
 
-[Explore the browser demo](https://aaltahms.github.io/reverse-lab/) · [Aymen's portfolio](https://aaltahms.github.io/#reverse-lab)
+[Explore the guided example](https://aaltahms.github.io/reverse-lab/) · [Aymen's portfolio](https://aaltahms.github.io/#reverse-lab)
 
 ReverseLab connects tiny C programs to their compiled artifacts, native disassembly, independently expressed Python candidates, real Ghidra pseudocode for a stripped fixture, and deterministic differential tests. Its local explorer makes the investigation reviewable: follow an interpretation to the code, inspect the executable identity, and replay a concrete counterexample.
 
 This is an educational, **source-known** experiment built with Codex assistance in October 2026. The C fixtures are self-authored. The Python candidates were authored with the reference source known. The Ghidra view contains actual decompiler output from the stripped packet binary; its function address was selected using the symbol-bearing twin. This is not a claim of blind reverse engineering. Sampled agreement is not a proof of equivalence.
 
 ![Side-by-side decoder comparison](docs/screenshots/decoder-comparison.jpg)
+
+## Compare your own programs
+
+**v0.5 adds a working local comparison runner.** Select a C source file and a Python rewrite in the browser, supply hex inputs, run both, and inspect the exact differing outputs. You can add seeded random inputs, download the report and full input corpus, and reopen a report on the hosted site without executing code there.
+
+Requires **macOS or Linux, Python 3.9+, and Clang**. No pip/npm install or API key is needed. From this project folder:
+
+```sh
+python3 -m lab.serve --execute
+```
+
+Open **http://127.0.0.1:4173/compare.html**. Choose your files, or select **Load starter files**, confirm that you trust the programs, then **Run comparison**. The starter exposes a real missing-wrap checksum bug: `ff ff` returns **254 in C** and **510 in Python**. **Use corrected Python** restores agreement when rerun.
+
+The supported interface is deliberately explicit:
+
+```c
+#include <stdint.h>
+#include <stddef.h>
+uint32_t evaluate(const uint8_t *data, size_t length);
+```
+
+The C file supplies that function, without `main()`. The Python file supplies `def evaluate(data: bytes) -> int`; another top-level function name can be selected. Each receives 0–64 bytes and returns an unsigned 32-bit integer. One hex input goes on each line; `-` means empty input. There are at most 256 total cases, including up to 200 optional seeded random cases. Standard libraries work; custom headers, sibling modules, packages, prebuilt binaries, arbitrary signatures and compiler flag configuration are outside this version. A wrapper can adapt another pure function to this interface.
+
+**Run only code you trust.** Programs execute with your account permissions. Loopback binding, same-origin checks, a per-session token, one run at a time, temporary files, and process time/output limits help prevent accidental misuse; this is **not an isolation sandbox for hostile programs**. The public GitHub Pages site has no execution backend. Source files are sent only to the local runner and removed from its temporary folder after each run. The report excludes source text but contains filenames, input bytes, hashes, environment details and diagnostics; review it before sharing.
+
+The same runner is available from the terminal:
+
+```sh
+python3 -m lab.compare --reference web/starter/reference.c \
+  --candidate web/starter/candidate.py --inputs web/starter/inputs.txt \
+  --output comparison.json
+```
+
+Exit **1 is expected for this deliberately buggy starter**; 0 means agreement on the selected corpus, 2 means setup/validation/execution failure. Add `--function reconstruct`, `--random-count 100`, or `--seed 42` as needed. Downloaded exact inputs can be reused with random count 0 for a replay. [Full usage and failure handling](docs/custom-comparisons.md). [Open the hosted report viewer](https://aaltahms.github.io/reverse-lab/compare.html).
 
 ## Open the explorer
 
@@ -29,7 +63,7 @@ Open **http://127.0.0.1:4173**. If you already opened a terminal in `reverse-lab
 4. Choose **Damaged checksum** or **Empty input** to see readable rejection reasons.
 5. Open **Technical evidence** for code, native disassembly/Ghidra, all test cases, exact identities and CLI replay.
 
-This combines a direct comparison with a short explanation and a next action. It displays recorded native results; it does not execute either decoder in the browser or accept arbitrary uploaded programs. Technical details are secondary to the comparison. Existing evidence/case URLs still open the technical view; new comparison URLs use `screen=workbench`. Arrow keys move between technical tabs, and `/` focuses their search. See [walkthrough](docs/walkthrough.md).
+The guided example displays recorded native results. Select **Compare your own programs** for the local execution workflow described above; the hosted site can open downloaded reports. Technical details are secondary to the comparison. Existing evidence/case URLs still open the technical view; new comparison URLs use `screen=workbench`. Arrow keys move between technical tabs, and `/` focuses their search. See [walkthrough](docs/walkthrough.md).
 
 ## Rebuild and verify
 
@@ -83,9 +117,9 @@ The recording retains exact compiler output/flags/commands, platform, source/har
 - Controlled endian mutation demonstrating that some passing tests can coexist with real failures.
 - Provenance and replay guards tying a report to executable and model identity.
 - Candidate freezing followed by a disjoint evaluation corpus, native execution and guarded exact replay.
-- Read-only, dependency-free evidence explorer with loading/error/empty states, source reveal, and keyboard navigation.
+- Dependency-free recorded evidence explorer, plus an opt-in trusted local C/Python runner and portable report viewer.
 - A real REA/Ghidra CLI adapter with target/profile binding, unmodified raw Evidence exports, provider limitations and navigable pseudocode landmarks.
-- A 34-test suite and static production export; [CI workflow](.github/workflows/verify.yml) with a [successful hosted Linux run](https://github.com/aaltahms/reverse-lab/actions/runs/38621612572) on Python 3.9 and 3.13.
+- A 53-test Python suite, 14 JavaScript checks, and static production export; [CI workflow](.github/workflows/verify.yml) with a [successful hosted Linux run](https://github.com/aaltahms/reverse-lab/actions/runs/38621612572) on Python 3.9 and 3.13.
 
 The [architecture](docs/architecture.md), [verification record](docs/verification.md), [fixture contracts](docs/contracts.md), and [backlog](docs/backlog.md) define exact boundaries.
 
@@ -120,14 +154,14 @@ python3 -m lab.webbuild
 
 Default seed selection uses system randomness after the freeze; `--seed N` makes an operator-specified run reproducible. This is a **source-known local procedural freeze**, not a source-blind or authenticated independent assessment. The same generator samples both corpora; unique inputs do not necessarily cover unique behavior. See [procedure and limitations](docs/held-out-evaluation.md).
 
-The next engineering improvement is **failure minimization**. A genuine source-blind challenge needs a separate analyst context and controlled disclosure. Runtime tracing, cross-host execution and universal equivalence remain outside this release. See [uses and portfolio positioning](docs/portfolio-positioning.md) for the project's practical role alongside ResolveAI and hardware verification.
+Possible later extensions include **failure minimization** and additional function adapters; they are not required for the current local comparison workflow. A genuine source-blind challenge needs a separate analyst context and controlled disclosure. Runtime tracing, cross-host execution and universal equivalence remain outside this release. See [uses and portfolio positioning](docs/portfolio-positioning.md) for the project's practical role alongside ResolveAI and hardware verification.
 
 ## License and credits
 
 MIT; see [LICENSE](LICENSE). Original project implementation and fixtures by Aymen Al-Tahmschi with Codex assistance. Fletcher-16 is an established checksum algorithm; the lab orchestration, fixture contracts, comparison harness, mutant experiment, and explorer are new project work. The release archive includes genuine REA/Ghidra output for our owned target, but no REA/Ghidra implementation or third-party executable. It bundles no font, icon library, or JavaScript/Python runtime package. REA, Ghidra and Temurin retain their own licenses in the ignored optional toolchain. External compilers and system tools retain their own licenses.
 
-Run `python3 -m lab.release` to create `dist/reverse-lab-0.4.0.zip`, containing only this project’s source, documentation, demo evidence and a SHA-256 manifest. The freeze receipt includes candidate snapshots and development inputs, but the archive excludes native binaries and optional toolchains.
+Run `python3 -m lab.release` to create `dist/reverse-lab-0.5.0.zip`, containing only this project’s source, documentation, demo evidence and a SHA-256 manifest. The freeze receipt includes candidate snapshots and development inputs, but the archive excludes native binaries and optional toolchains.
 
-A clean extraction passed all 34 tests, native regeneration, frozen evaluation, static export and exact failing-case replay. The reproducible seed gives the same 7,000 valid-candidate agreements and 999 repeated deliberate mismatches across the seven builds.
+The historical native recording passed 34 baseline checks, native regeneration, frozen evaluation, static export and exact failing-case replay. Version 0.5 adds 19 local comparison checks and seven report/input JavaScript checks; a clean extraction verifies the combined suite. The reproducible seed gives the same 7,000 valid-candidate agreements and 999 repeated deliberate mismatches across the seven builds.
 
-Published at [aaltahms/reverse-lab](https://github.com/aaltahms/reverse-lab), with the [browser demo](https://aaltahms.github.io/reverse-lab/) linked from [Aymen's portfolio](https://aaltahms.github.io/#reverse-lab). See the [publication verification record](docs/publication.md) for source, CI and deployment checks. Publication contains only this project's scoped source, documentation, screenshots and redistributable recordings. The browser demo serves the included recording; native replay requires a local build. Optional tools and unrelated workspace files are excluded.
+Published at [aaltahms/reverse-lab](https://github.com/aaltahms/reverse-lab), with the [browser demo](https://aaltahms.github.io/reverse-lab/) linked from [Aymen's portfolio](https://aaltahms.github.io/#reverse-lab). See the [publication verification record](docs/publication.md) for source, CI and deployment checks. Publication contains only this project's scoped source, documentation, screenshots and redistributable recordings. The hosted site serves the included recording and opens custom comparison reports; running your programs requires the local runner. Optional tools and unrelated workspace files are excluded.
