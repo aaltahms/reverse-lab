@@ -5,7 +5,7 @@ from pathlib import Path
 import zipfile
 from lab.webbuild import ROOT, validate, validate_assets
 
-VERSION = '0.4.0'
+VERSION = '0.5.0'
 DIRECTORIES = ['fixtures','reconstructions','lab','tests','web','docs','.github']
 FILES = ['README.md','LICENSE','.gitignore']
 
