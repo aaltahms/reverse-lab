@@ -58,3 +58,8 @@ The application includes one real native Ghidra decompilation recording. It does
 The included exercised profile is REA 6.4.0 / Ghidra 12.1.4 / macOS arm64 / Mach-O. Other layouts/providers are not claimed compatible merely because they produce JSON. Imported records carry `origin: imported-record`; the actual CLI path records `origin: local-run`. Regenerating baseline evidence clears the derived variant/provider attachment so changed binaries cannot silently inherit stale findings. External tools are optional and excluded from the release archive.
 
 The viewer distinguishes native assembly, actual Ghidra pseudocode, authored Python and reference C. Pseudocode landmarks are located in the real output; they are navigational annotations, not independent semantic findings. Ghidra's inferred types/names and optimized vector loops remain unedited. The behavioral report compares the Python model with the compiled executable, not with a compiled version of the pseudocode.
+
+
+## User program comparisons (0.5)
+
+`compare.html` and `compare.mjs` provide a separate focused task alongside the recorded explorer. `lab.compare` validates source/input contracts, compiles a temporary C executable with the existing 64-byte harness, and runs a Python candidate in a separate isolated-mode interpreter. `process_worker.py` applies best-effort resource limits before exec; `candidate_worker.py` captures per-input Python outcomes. `lab.serve --execute` opts into a loopback API with same-origin/token/size checks and one concurrent run. Ordinary `lab.serve` remains non-executing. `comparison-report.mjs` validates portable reports before display; import never executes source. See [contract, lifecycle and limitations](custom-comparisons.md).

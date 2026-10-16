@@ -11,3 +11,6 @@ Completed in 0.2.0: real Ghidra analysis of the stripped packet fixture, target/
 5. **Larger domains.** Exhaustively check short state-machine sequences; then add coverage-guided input generation and metamorphic checks for the bounded checksum. Keep sampled and exhaustive domains labeled separately.
 
 AddressSanitizer runtime diagnosis on this macOS host is an optional toolchain follow-up. UBSan already runs on the release corpus. React/graph libraries, live execution from the UI, runtime tracing and more fixtures should be added only when they help an actual investigation.
+
+
+Completed in 0.5: trusted local C/Python source selection, compilation/execution, user hex cases, optional seeded cases, exact differences and errors, report/input export, and hosted report import. The remaining adapters and failure minimization are possible future scope, not blockers for the supported bytes-to-uint32 workflow.
